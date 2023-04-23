@@ -25,7 +25,7 @@ services:
     volumes:
       - database:/var/lib/postgresql/data
     networks:
-      - db
+      - authentik_internal
     environment:
       - POSTGRES_PASSWORD=${PG_PASS:?database password required}
       - POSTGRES_USER=${PG_USER:-authentik}
@@ -93,7 +93,7 @@ services:
     networks:
       - authentik_internal
     volumes:
-      - /var/run/user/1000/docker.sock:/var/run/docker.sock
+      # - /var/run/user/1000/docker.sock:/var/run/docker.sock # hopefully we dont need this as it is a potential security risk
       - ./media:/media
       - ./certs:/certs
       - ./custom-templates:/templates
