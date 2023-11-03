@@ -1,5 +1,5 @@
 ---
-version: '3.4'
+version: "3.4"
 
 networks:
   proxy:
@@ -27,9 +27,9 @@ services:
     networks:
       - authentik_internal
     environment:
-      - POSTGRES_PASSWORD=${PG_PASS:?database password required}
-      - POSTGRES_USER=${PG_USER:-authentik}
-      - POSTGRES_DB=${PG_DB:-authentik}
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-authentik}
+      POSTGRES_DB: ${PG_DB:-authentik}
     env_file:
       - .env
 
@@ -46,10 +46,10 @@ services:
     networks:
       - authentik_internal
     volumes:
-      - redis:/data
+      - cache:/data
 
   server:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.4.0}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.2}
     restart: unless-stopped
     command: server
     environment:
@@ -68,13 +68,15 @@ services:
       - .env
     expose:
       - 9000
+      # - 9443
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.authentik.rule=Host(`auth.queerreferat.ac`)"
       - "treafik.http.services.authentik.loadbalancer.server.port=9000"
+      # - "treafik.https.services.authentik.loadbalancer.server.port=9443"
 
   worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.4.0}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.2}
     restart: unless-stopped
     command: worker
     environment:
@@ -93,15 +95,18 @@ services:
     networks:
       - authentik_internal
     volumes:
-      # - /var/run/user/1000/docker.sock:/var/run/docker.sock # hopefully we dont need this as it is a potential security risk
+      # - /var/run/docker.sock:/var/run/docker.sock # hopefully not needed as this is a security risk
       - ./media:/media
       - ./certs:/certs
       - ./custom-templates:/templates
     env_file:
       - .env
+    depends_on:
+      - postgresql
+      - redis
 
 volumes:
   database:
     driver: local
-  redis:
+  cache:
     driver: local
