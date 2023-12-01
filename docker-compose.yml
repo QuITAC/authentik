@@ -5,7 +5,7 @@ networks:
   proxy:
     external: true
     name: proxy
-  authentik_internal:
+  internal:
 
 
 services:
@@ -23,9 +23,9 @@ services:
       retries: 5
       timeout: 5s
     volumes:
-      - database:/var/lib/postgresql/data
+      - ./database:/var/lib/postgresql/data
     networks:
-      - authentik_internal
+      - internal
     environment:
       POSTGRES_PASSWORD: ${PG_PASS:?database password required}
       POSTGRES_USER: ${PG_USER:-authentik}
@@ -44,9 +44,9 @@ services:
       retries: 5
       timeout: 3s
     networks:
-      - authentik_internal
+      - internal
     volumes:
-      - cache:/data
+      - ./cache:/data
 
   server:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.2}
@@ -60,10 +60,10 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
     volumes:
       - ./media:/media
-      - ./custom-templates:/templates
+      - ./templates:/templates
     networks:
       - proxy
-      - authentik_internal
+      - internal
     env_file:
       - .env
     expose:
@@ -71,12 +71,12 @@ services:
       # - 9443
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.authentik.rule=Host(`auth.queerreferat.ac`)"
+      - "traefik.http.routers.authentik.rule=Host(`sso.queerreferat.ac`)"
       - "treafik.http.services.authentik.loadbalancer.server.port=9000"
       # - "treafik.https.services.authentik.loadbalancer.server.port=9443"
 
   worker:
-    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.2}
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.4}
     restart: unless-stopped
     command: worker
     environment:
@@ -93,20 +93,14 @@ services:
     # (1000:1000 by default)
     user: root
     networks:
-      - authentik_internal
+      - internal
     volumes:
       # - /var/run/docker.sock:/var/run/docker.sock # hopefully not needed as this is a security risk
       - ./media:/media
       - ./certs:/certs
-      - ./custom-templates:/templates
+      - ./templates:/templates
     env_file:
       - .env
     depends_on:
       - postgresql
       - redis
-
-volumes:
-  database:
-    driver: local
-  cache:
-    driver: local

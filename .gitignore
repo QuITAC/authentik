@@ -1,2 +1,7 @@
 .env
 letsencrypt
+media
+certs
+templates
+database
+cache
