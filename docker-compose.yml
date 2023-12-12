@@ -61,6 +61,7 @@ services:
     volumes:
       - ./media:/media
       - ./templates:/templates
+      - ../custom_assets:/web/dist/custom_assets
     networks:
       - proxy
       - internal
