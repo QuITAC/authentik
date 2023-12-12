@@ -6,7 +6,8 @@ accessible at `sso.queerreferat.ac`.
 To deploy Authentik, make sure the Traefik reverse proxy is already running.
 Then simply run
 ```
-sh startup.sh
+chmod +x ./startup.sh
+./startup.sh
 ```
 Additionally, a lot of configuration needs to be performered within the UI (as a
 next step we try to automate this):
