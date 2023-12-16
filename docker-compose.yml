@@ -8,6 +8,11 @@ networks:
   internal:
 
 
+volumes:
+  database:
+  cache:
+
+
 services:
   postgresql:
     image: docker.io/library/postgres:12-alpine
@@ -23,7 +28,7 @@ services:
       retries: 5
       timeout: 5s
     volumes:
-      - ./database:/var/lib/postgresql/data
+      - database:/var/lib/postgresql/data:Z
     networks:
       - internal
     environment:
@@ -46,7 +51,7 @@ services:
     networks:
       - internal
     volumes:
-      - ./cache:/data
+      - cache:/data:Z
 
   server:
     image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2023.10.2}
@@ -60,8 +65,7 @@ services:
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
     volumes:
       - ./media:/media
-      - ./templates:/templates
-      - ../custom_assets:/web/dist/custom_assets
+      - ../custom_assets:/web/dist/custom_assets # isnt that medias job??
     networks:
       - proxy
       - internal
@@ -86,18 +90,9 @@ services:
       AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
       AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
       AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
-    # `user: root` and the docker socket volume are optional.
-    # See more for the docker socket integration here:
-    # https://goauthentik.io/docs/outposts/integrations/docker
-    # Removing `user: root` also prevents the worker from fixing the permissions
-    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
-    # (1000:1000 by default)
-    user: root
     networks:
       - internal
     volumes:
-      # - /var/run/docker.sock:/var/run/docker.sock # hopefully not needed as this is a security risk
-      - ./media:/media
       - ./certs:/certs
       - ./templates:/templates
     env_file:
